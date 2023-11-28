@@ -28,12 +28,6 @@ function App() {
   } = useQuery(['allData', userId, isMocked], async () => {
     const provider = isMocked ? new DataProviderMock() : new DataProvider();
 
-    const barChartPromise = provider.getActivity(userId);
-    const lineChartPromise = provider.getSessions(userId);
-    const radarChartPromise = provider.getPerformance(userId);
-    const radialChartPromise = provider.getMainData(userId);
-    const alimentationPromise = provider.getMainData(userId);
-
     const [
       barChartGraphDto,
       lineChartGraphDto,
@@ -41,11 +35,11 @@ function App() {
       radialChartGraphDto,
       alimentationDto,
     ] = await Promise.all([
-      barChartPromise,
-      lineChartPromise,
-      radarChartPromise,
-      radialChartPromise,
-      alimentationPromise,
+      provider.getActivity(userId),
+      provider.getSessions(userId),
+      provider.getPerformance(userId),
+      provider.getScore(userId),
+      provider.getMainData(userId),
     ]);
 
     return {
@@ -59,15 +53,10 @@ function App() {
 
   // LOADER //
 
-  const [showLoading, setShowLoading] = useState(isLoading);
+  const [showLoading, setShowLoading] = useState(isFetching);
 
   useEffect(() => {
-    const delay = setTimeout(() => {
-      setShowLoading(isLoading);
-    }, 3000);
-
-    // délai off lorsque isFetching devient faux
-    return () => clearTimeout(delay);
+    setShowLoading(isFetching);
   }, [isLoading, isFetching]);
 
   if (showLoading) {

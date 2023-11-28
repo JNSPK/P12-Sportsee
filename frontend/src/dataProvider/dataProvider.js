@@ -16,6 +16,11 @@ class RadarChartDTO {
     this.formattedData = formattedData;
   }
 }
+class ScoreDTO {
+  constructor(data) {
+    this.graphData = data;
+  }
+}
 class MainDataDTO {
   constructor(data) {
     this.graphData = data;
@@ -197,7 +202,11 @@ class DataProviderMock {
     });
   }
   getMainData() {
-    console.log('DTO Mock:', new MainDataDTO(graphDataMain[0]));
+    return new Promise((resolve) => {
+      resolve(new ScoreDTO(graphDataMain[0]));
+    });
+  }
+  getScore() {
     return new Promise((resolve) => {
       resolve(new MainDataDTO(graphDataMain[0]));
     });
@@ -213,13 +222,11 @@ class DataProvider {
         `http://localhost:3000/user/${userId}/activity`
       );
       const data = await response.json();
-      // console.log('Raw data activity:', data);
 
       const formattedData = data.data.sessions.map((session) => ({
         axeX: session.kilogram,
         axeY: session.calories,
       }));
-      // console.log('Formatted data activity:', formattedData);
 
       return new BarChartDTO(formattedData, graphLegend);
     } catch (error) {
@@ -232,13 +239,15 @@ class DataProvider {
         `http://localhost:3000/user/${userId}/average-sessions`
       );
       const data = await response.json();
-      // console.log('Raw data sessions:', data);
+
+      data.data.sessions.unshift({ day: '', sessionLength: 30 });
+      data.data.sessions.push({ day: '', sessionLength: 30 });
 
       const formattedData = data.data.sessions.map((sessions) => ({
         axeX: sessions.day,
         axeY: sessions.sessionLength,
       }));
-      // console.log('Formatted data sessions:', formattedData);
+
       return new LineChartDTO(formattedData);
     } catch (error) {
       console.error('Erreur lors de la récupération des données :', error);
@@ -266,17 +275,27 @@ class DataProvider {
     try {
       const response = await fetch(`http://localhost:3000/user/${userId}`);
       const data = await response.json();
-      // console.log('Raw data main:', data);
 
       const formattedData = {
-        todayScore: data.data.score || data.data.todayScore,
         keyData: data.data.keyData,
         userInfos: data.data.userInfos,
       };
 
-      // console.log('Formatted data main:', formattedData);
-      // console.log('Result DTO main:', new MainDataDTO(formattedData));
       return new MainDataDTO(formattedData);
+    } catch (error) {
+      console.error('Erreur lors de la récupération des données :', error);
+    }
+  }
+  async getScore(userId) {
+    try {
+      const response = await fetch(`http://localhost:3000/user/${userId}`);
+      const data = await response.json();
+
+      const formattedData = {
+        todayScore: data.data.score || data.data.todayScore,
+      };
+
+      return new ScoreDTO(formattedData);
     } catch (error) {
       console.error('Erreur lors de la récupération des données :', error);
     }
